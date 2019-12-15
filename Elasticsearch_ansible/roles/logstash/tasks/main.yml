@@ -1,0 +1,79 @@
+# Installing logstash
+
+- name : Install Logstatsh 
+  apt:
+    name: logstash
+    state: present
+    update_cache: yes
+  become: yes
+
+# Create certs directories
+- name: Create SSL directories
+  file:
+    path: /etc/pki/tls/certs
+    state: directory
+
+# Create private directory for SSL
+- name: Create private directory for SSL
+  file:
+    path: /etc/pki/tls/private
+    state: directory
+
+# Get Public IP of EC2
+- name: Get Public IP
+  command: curl http://169.254.169.254/latest/meta-data/public-ipv4
+  register: ec2_public_ip
+
+# Update SSL to restrict outside access
+- name: restrict outside access
+  lineinfile:
+    destfile: /etc/ssl/openssl.cnf
+    regexp: 'subjectAltName ='
+    line: 'subjectAltName = IP: {{ ec2_public_ip }}'
+
+# Generate SSL certs for logstash
+- name: Generate SSL certs
+  shell: "openssl req -config /etc/ssl/openssl.cnf -x509 -days 3650 -batch -nodes -newkey rsa:2048 -keyout \
+         /etc/pki/tls/private/logstash-forwarder.key -out /etc/pki/tls/certs/logstash-forwarder.crt"
+
+# Configure Beats
+- name: Beats configuration
+  template:
+    src: beats-input.conf.j2
+    dest: /etc/logstash/conf.d/02-beats-input.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+# Configure filter configuration
+- name: Configure syslog filter
+  template:
+    src: syslog-filter.conf.j2
+    dest: /etc/logstash/conf.d/10-syslog-filter.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+# Configure Output configurations
+- name: COnfigure Elastisearch output
+  template: 
+    src: es-output.conf.j2
+    dest: /etc/logstash/conf.d/30-elasticsearch-output.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+# Update heap size to accomodate in free tier ec2 node with 1GB memory
+- name: Set initial memory allocation pool (Xms)
+  lineinfile:
+    destfile: /etc/logstash/jvm.options
+    regexp: '-Xms1g'
+    line: '-Xms512m'
+
+# Start logstash
+- name: Start & Enable Logstash service
+  systemd:
+    name: logstash
+    state: started
+    enabled: yes
+    daemon_reload: yes

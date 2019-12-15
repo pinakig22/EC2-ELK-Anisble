@@ -1,0 +1,56 @@
+# Installing Java 
+
+# Add the Java ppa repository
+- name: Add java repository
+  apt_repository:
+    repo: ppa:openjdk-r/ppa
+
+- name : Install Java 8
+  apt:
+    name: openjdk-8-jdk
+    state: present
+    update_cache: yes
+
+# Installing Elasticsearch
+- name: Add Elasticsearch apt-key
+  apt_key:
+    url: "https://packages.elastic.co/GPG-KEY-elasticsearch"
+    state: present
+
+- name: Adding elasticsearch apt repository
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/6.x/apt stable main
+    state: present
+
+- name: Update repositories cache and install ES
+  apt:
+    name: elasticsearch
+    update_cache: yes
+
+# Update ES config file to allow localhost connections
+- name: Updating the config file to restrict outside access
+  lineinfile:
+    destfile: /etc/elasticsearch/elasticsearch.yml
+    regexp: 'network.host:'
+    line: 'network.host: localhost'
+
+- name: Update port in configuration file
+  lineinfile:
+    destfile: /etc/elasticsearch/elasticsearch.yml
+    regexp: 'http.port:'
+    line: 'http.port: 9200'
+
+# Update heap size to accomodate in free tier ec2 node with 1GB memory
+- name: Set initial memory allocation pool (Xms)
+  lineinfile:
+    destfile: /etc/elasticsearch/jvm.options
+    regexp: '-Xms1g'
+    line: '-Xms512m'
+  
+
+# start and enable elasticache
+- name: Start service
+  service:
+    name: elasticsearch
+    state: started
+    enabled: yes
