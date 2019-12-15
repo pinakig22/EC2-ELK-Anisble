@@ -1,0 +1,20 @@
+# Create EC2 instance
+- name: e2 launcher
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: launching ec2
+      ec2:
+        #instance_type: t2.micro
+        instance_type: t2.medium
+        key_name: ec2-keypair
+        image: ami-00d4e9ff62bc40e03
+        region: us-east-1
+        group: MyWebDMZ
+        vpc_subnet_id: subnet-52aee47c
+        instance_tags:
+          Name: elasticsearch
+        assign_public_ip: yes
+        wait: yes
+        count: 1
+      register: ec2
