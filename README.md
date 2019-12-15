@@ -1,2 +1,2 @@
-# EC2-ELK-Anisble
-Ansible Playbook to Create EC2 and deploy ElasticSearch on the EC2 instance
+# README
+This repo contains ansible playbooks to deploy a Single EC2 instance and ELK stack on top of it.
