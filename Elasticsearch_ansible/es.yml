@@ -3,11 +3,8 @@
   remote_user: ubuntu
   become: yes
   become_user: root
-  # Python Pexpect works on Python 3.3 or higher or Python 2.7. 
-  #No need to setup python explicitly if EC2 node is having python 3.3 or higher
-  #vars:
-  #  ansible_python_interpreter: /usr/bin/python2.7
-  
+  vars:
+    ansible_python_interpreter: /usr/bin/python2.7
   roles:
     - elasticsearch 
     - kibana
